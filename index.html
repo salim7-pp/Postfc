@@ -75,6 +75,13 @@ input:focus,textarea:focus,select:focus,button:focus-visible{outline:2px solid v
 .stat{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
 .stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
 .stat span{font-size:12px;color:var(--muted)}
+#meters{display:flex;flex-direction:column;gap:16px}
+.meter{display:flex;flex-direction:column;gap:4px}
+.meter .top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.meter .top b{font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--ok)}
+.bar i.warn{background:var(--warn)} .bar i.bad{background:var(--bad)}
 .note{padding:10px 12px;border-radius:10px;font-size:14px;border:1px solid var(--line)}
 .note.err{color:var(--bad)} .note.ok{color:var(--ok)}
 .thumbs{display:flex;gap:6px;flex-wrap:wrap}
@@ -120,6 +127,13 @@ nav button[aria-current="page"]{color:var(--accent);font-weight:700}
     <div class="card" id="balanceCard">
       <div class="row"><h2>رصيدي هذا الشهر</h2><button class="btn ghost" id="reloadBalance" type="button" style="flex:0 0 auto">تحديث</button></div>
       <div id="balance"><p class="muted">أضف مفتاح API ليظهر رصيدك.</p></div>
+    </div>
+    <div class="card" id="metersCard">
+      <h2>المتبقي من المجاني هذا الشهر</h2>
+      <p class="muted" id="metersReset"></p>
+      <div id="meters"><p class="muted">أضف مفتاح API ليظهر العداد.</p></div>
+      <button class="btn ghost" id="countMsgs" type="button">احسب الرسائل المرسلة هذا الشهر</button>
+      <p class="muted">Zernio لا يعطي عدد الرسائل مباشرة، فيحسبها التطبيق من محادثاتك، وقد يستغرق ذلك دقيقة. الأرقام تقديرية، وZernio يرسل لك بريدًا عند بلوغ 7,500 رسالة.</p>
     </div>
     <div class="card">
       <h2>ربط حسابك في Zernio</h2>
@@ -316,7 +330,7 @@ function show(v){
   if (v === "inbox") loadInbox();
   if (v === "stats") loadStats();
   if (v === "auto") loadAuto();
-  if (v === "settings" && KEY) loadBalance();
+  if (v === "settings" && KEY) { loadBalance(); loadMeters(); }
   window.scrollTo(0,0);
 }
 document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => show(b.dataset.v)));
@@ -403,7 +417,7 @@ $("saveKey").addEventListener("click", async () => {
   try {
     await loadAccounts();
     note("settingsMsg", "تم الاتصال. عدد الحسابات: " + accounts.length + (store.get("zernio_vault") ? ". التطبيق محمي بكلمة المرور." : ". لم تضع كلمة مرور بعد."), "ok");
-    loadBalance();
+    loadBalance(); loadMeters();
   } catch (e) { note("settingsMsg", e.message, "err"); }
 });
 $("clearKey").addEventListener("click", () => {
@@ -765,6 +779,95 @@ async function loadBalance(){
   html += '<p class="muted">المجاني شهريًا: حسابان، 10,000 رسالة في الصندوق، 2,000 تشغيل للرد التلقائي، 500 إعلان نشط.</p>';
   box.innerHTML = html;
 }
+
+/* ---------- free allowance meters ---------- */
+// Allowances reset at 00:00 UTC on the 1st. Zernio exposes no count for these, so the app works them out.
+const LIMITS = { msgs: 10000, runs: 2000, ads: 500 };
+function monthStartUTC(){ const n = new Date(); return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), 1); }
+function monthKey(){ return new Date(monthStartUTC()).toISOString().slice(0,7); }
+function meterRow(label, used, limit, note){
+  const known = typeof used === "number";
+  const pct = known ? Math.min(100, used / limit * 100) : 0;
+  const cls = pct >= 90 ? "bad" : pct >= 75 ? "warn" : "";
+  const left = known ? Math.max(0, limit - used) : null;
+  return '<div class="meter"><div class="top"><span>'+label+'</span><b>'+(known ? 'يبقى '+num(left)+' من '+num(limit) : '—')+'</b></div>' +
+    '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="'+limit+'" aria-valuenow="'+(known?used:0)+'"><i class="'+cls+'" style="width:'+pct+'%"></i></div>' +
+    '<span class="muted">'+(known ? 'مستعمل: '+num(used) : '')+(note ? (known ? ' · ' : '')+note : '')+'</span></div>';
+}
+let meterState = { msgs: null, msgsNote: "", runs: null, runsNote: "", ads: null, adsNote: "" };
+function renderMeters(){
+  const s = meterState;
+  $("meters").innerHTML =
+    meterRow("رسائل الصندوق المرسلة", s.msgs, LIMITS.msgs, s.msgsNote) +
+    meterRow("تشغيل الرد التلقائي", s.runs, LIMITS.runs, s.runsNote) +
+    meterRow("الإعلانات النشطة", s.ads, LIMITS.ads, s.adsNote);
+}
+async function loadMeters(){
+  const next = new Date(monthStartUTC()); next.setUTCMonth(next.getUTCMonth() + 1);
+  $("metersReset").textContent = "يتجدد المجاني يوم " + next.toLocaleDateString("ar-DZ", { day: "numeric", month: "long" });
+  // messages: last count saved on this phone for this month
+  try {
+    const saved = JSON.parse(store.get("zernio_msgcount") || "null");
+    if (saved && saved.month === monthKey()) { meterState.msgs = saved.count; meterState.msgsNote = "آخر حساب: " + fmtDate(saved.at) + (saved.partial ? " (جزئي)" : ""); }
+    else { meterState.msgs = null; meterState.msgsNote = "اضغط الزر أدناه لحسابها"; }
+  } catch (e) {}
+  meterState.runsNote = meterState.adsNote = "جارٍ التحميل...";
+  renderMeters();
+  const [auto, ads] = await Promise.allSettled([
+    api("/v1/comment-automations"),
+    api("/v1/ads", { query: { status: "active", limit: 1 } })
+  ]);
+  // automation runs this month: rules made this month count in full; older rules count from the first time this phone saw them this month
+  if (auto.status === "fulfilled") {
+    const list = auto.value.automations || [];
+    let base = {}; try { base = JSON.parse(store.get("zernio_runbase") || "{}"); } catch (e) {}
+    if (base.month !== monthKey()) base = { month: monthKey(), byId: {} };
+    let runs = 0, approx = false;
+    list.forEach(a => {
+      const t = (a.stats && a.stats.triggered) || 0;
+      if (new Date(a.createdAt).getTime() >= monthStartUTC()) { runs += t; return; }
+      if (!(a.id in base.byId)) { base.byId[a.id] = t; approx = true; }
+      runs += Math.max(0, t - base.byId[a.id]);
+    });
+    store.set("zernio_runbase", JSON.stringify(base));
+    meterState.runs = runs;
+    meterState.runsNote = list.length ? (approx ? "تقديري: قواعد قديمة تُحسب من اليوم" : "من إحصائيات قواعدك") : "لا توجد قواعد بعد";
+  } else { meterState.runs = null; meterState.runsNote = auto.reason.message; }
+  if (ads.status === "fulfilled") {
+    const p = ads.value.pagination || {};
+    meterState.ads = typeof p.total === "number" ? p.total : (ads.value.ads || []).length;
+    meterState.adsNote = "";
+  } else { meterState.ads = null; meterState.adsNote = "لا توجد إعلانات أو غير متاحة"; }
+  renderMeters();
+}
+$("countMsgs").addEventListener("click", async () => {
+  const b = $("countMsgs"); b.disabled = true;
+  const start = monthStartUTC(), MAX_CONV = 40;
+  let count = 0, partial = false;
+  try {
+    meterState.msgsNote = "جارٍ جلب المحادثات..."; renderMeters();
+    const d = await api("/v1/inbox/conversations", { query: { limit: 100 } });
+    const convs = (d.data || []).filter(c => !c.updatedTime || new Date(c.updatedTime).getTime() >= start);
+    if (d.pagination && d.pagination.hasMore) partial = true;
+    const todo = convs.slice(0, MAX_CONV); if (convs.length > MAX_CONV) partial = true;
+    for (let i = 0; i < todo.length; i++) {
+      meterState.msgsNote = "جارٍ الحساب: محادثة " + (i+1) + " من " + todo.length; renderMeters();
+      const c = todo[i];
+      try {
+        const m = await api("/v1/inbox/conversations/" + encodeURIComponent(c.id) + "/messages", { query: { accountId: c.accountId, limit: 100, sortOrder: "desc" } });
+        (m.messages || []).forEach(x => {
+          if (x.direction === "outgoing" && x.deliveryStatus !== "failed" && new Date(x.createdAt).getTime() >= start) count++;
+        });
+        if (m.pagination && m.pagination.hasMore) partial = true;
+      } catch (e) { partial = true; }
+      await new Promise(r => setTimeout(r, 400)); // stay under the free plan's 60 requests a minute
+    }
+    const at = new Date().toISOString();
+    store.set("zernio_msgcount", JSON.stringify({ month: monthKey(), count, partial, at }));
+    meterState.msgs = count; meterState.msgsNote = "آخر حساب: " + fmtDate(at) + (partial ? " (جزئي، قد يكون العدد أكبر قليلًا)" : "");
+  } catch (e) { meterState.msgsNote = e.message; }
+  renderMeters(); b.disabled = false;
+});
 
 /* ---------- stats ---------- */
 const metricAr = { impressions:"مرات الظهور", reach:"الوصول", views:"المشاهدات", likes:"الإعجابات", comments:"التعليقات", shares:"المشاركات", clicks:"النقرات", saves:"الحفظ", engagementRate:"معدل التفاعل %", totalPosts:"المنشورات", publishedPosts:"المنشورات" };
