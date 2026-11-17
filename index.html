@@ -693,7 +693,7 @@ $("aCreate").addEventListener("click", async () => {
       name: $("aName").value.trim() || "رد تلقائي",
       dmMessage: dm,
       keywords: $("aKeys").value.split(/[,،]/).map(s => s.trim()).filter(Boolean),
-      repeatPolicy: $("aEvery").checked ? "every_comment" : "once",
+      repeatPolicy: { mode: $("aEvery").checked ? "every_comment" : "once" },
       isActive: true
     };
     if ($("aScope").value) body.postId = $("aScope").value;
