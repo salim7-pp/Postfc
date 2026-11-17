@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>منشوراتي</title>
+<meta name="theme-color" content="#1d3b5c">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d3b5c'/%3E%3Cpath d='M18 22h28v6H27l19 14v6H18v-6h19L18 28z' fill='%23f2c14e'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-column phone app, sticky header, fixed bottom tab bar */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --fg:#17212e; --muted:#5d6b7c; --line:#dde3ea;
+  --accent:#1d3b5c; --accent-fg:#ffffff; --gold:#c8961f;
+  --ok:#1e7a4c; --warn:#a86a00; --bad:#b3261e;
+  --font:"IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f151d; --surface:#18212c; --fg:#e6ebf1; --muted:#97a4b4; --line:#2a3644;
+  --accent:#8fb6e0; --accent-fg:#0f151d; --gold:#f2c14e;
+  --ok:#5fcf95; --warn:#f0b24a; --bad:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151d; --surface:#18212c; --fg:#e6ebf1; --muted:#97a4b4; --line:#2a3644;
+  --accent:#8fb6e0; --accent-fg:#0f151d; --gold:#f2c14e;
+  --ok:#5fcf95; --warn:#f0b24a; --bad:#ff8a80; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--font);
+  padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+[hidden]{display:none!important}
+header{position:sticky;top:0;z-index:5;background:var(--accent);color:var(--accent-fg);
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+header h1{margin:0;font-size:18px;font-weight:700}
+header .row>*{flex:0 0 auto}
+header button{background:transparent;border:1px solid currentColor;color:inherit;border-radius:8px;padding:4px 10px;font:inherit;font-size:13px}
+main{max-width:640px;margin:0 auto;padding-block:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:17px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+label{font-size:13px;color:var(--muted);font-weight:500}
+input,textarea,select{width:100%;font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea{min-height:120px;resize:vertical}
+input:focus,textarea:focus,select:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:11px 14px;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--line)}
+.btn:disabled{opacity:.55}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row>*{flex:1 1 140px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;font:inherit;font-size:14px;padding:8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.acc{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:10px}
+.acc img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--line)}
+.acc input{width:auto}
+.muted{color:var(--muted);font-size:13px}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;border:1px solid currentColor}
+.s-scheduled{color:var(--warn)} .s-published{color:var(--ok)} .s-failed,.s-partial{color:var(--bad)} .s-draft,.s-cancelled,.s-publishing{color:var(--muted)}
+.item{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.item:first-child{border-top:0;padding-top:0}
+.item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.tap{cursor:pointer}
+.thread{display:flex;flex-direction:column;gap:8px;max-height:55vh;overflow:auto;padding:4px}
+.msg{max-width:85%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.in{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
+.msg.out{align-self:flex-end;background:var(--accent);color:var(--accent-fg)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:var(--bg);border-radius:10px;padding:8px;text-align:center}
+.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.note{padding:10px 12px;border-radius:10px;font-size:14px;border:1px solid var(--line)}
+.note.err{color:var(--bad)} .note.ok{color:var(--ok)}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap}
+.thumbs img,.thumbs video{width:72px;height:72px;object-fit:cover;border-radius:8px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav button{font:inherit;font-size:12px;background:none;border:0;color:var(--muted);padding:8px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:22px;height:22px}
+nav button[aria-current="page"]{color:var(--accent);font-weight:700}
+@media (prefers-reduced-motion:no-preference){.btn,.seg button{transition:background .15s}}
+</style>
+</head>
+<body>
+<header>
+  <h1>منشوراتي</h1>
+  <div class="row" style="flex:0 0 auto;gap:6px">
+    <button id="settingsBtn" type="button">حسابي ورصيدي</button>
+    <button id="lockBtn" type="button" hidden>قفل</button>
+  </div>
+</header>
+
+<main>
+  <!-- شاشة القفل -->
+  <section id="v-lock" hidden>
+    <div class="card" style="margin-top:8vh">
+      <h2>التطبيق مقفل</h2>
+      <p class="muted">أدخل كلمة المرور لفتح التطبيق.</p>
+      <label for="unlockPw">كلمة المرور</label>
+      <input id="unlockPw" type="password" autocomplete="current-password">
+      <button class="btn" id="unlockBtn" type="button">فتح</button>
+      <div id="lockMsg"></div>
+      <button class="btn ghost" id="forgotBtn" type="button">نسيت كلمة المرور</button>
+      <div id="forgotBox" hidden>
+        <p class="note">لا يمكن استرجاع كلمة المرور، لكن يمكنك مسح البيانات من هذا الهاتف ثم إدخال مفتاح API من جديد مع كلمة مرور جديدة.</p>
+        <button class="btn danger" id="wipeBtn" type="button">مسح والبدء من جديد</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- الإعدادات -->
+  <section id="v-settings" hidden>
+    <div class="card" id="balanceCard">
+      <div class="row"><h2>رصيدي هذا الشهر</h2><button class="btn ghost" id="reloadBalance" type="button" style="flex:0 0 auto">تحديث</button></div>
+      <div id="balance"><p class="muted">أضف مفتاح API ليظهر رصيدك.</p></div>
+    </div>
+    <div class="card">
+      <h2>ربط حسابك في Zernio</h2>
+      <p class="muted">انسخ مفتاح API من لوحة Zernio (قسم API Keys) والصقه هنا. يُحفظ المفتاح على هاتفك فقط ولا يُرسل إلا إلى Zernio.</p>
+      <label for="keyInput">مفتاح API</label>
+      <input id="keyInput" type="password" autocomplete="off" placeholder="sk_...">
+      <label for="pw1">كلمة مرور لفتح التطبيق</label>
+      <input id="pw1" type="password" autocomplete="new-password" placeholder="4 أحرف على الأقل">
+      <label for="pw2">تأكيد كلمة المرور</label>
+      <input id="pw2" type="password" autocomplete="new-password">
+      <p class="muted" id="pwHint">يُشفَّر مفتاح API بكلمة المرور، فلا يمكن استعماله من هاتفك بدونها. اترك الخانتين فارغتين للإبقاء على كلمة المرور الحالية.</p>
+      <label for="platformSel">المنصة</label>
+      <select id="platformSel">
+        <option value="facebook">فيسبوك فقط</option>
+        <option value="">كل المنصات</option>
+      </select>
+      <div class="row">
+        <button class="btn" id="saveKey" type="button">حفظ واختبار الاتصال</button>
+        <button class="btn danger" id="clearKey" type="button">حذف المفتاح وكلمة المرور</button>
+      </div>
+      <div id="settingsMsg"></div>
+    </div>
+  </section>
+
+  <!-- نشر -->
+  <section id="v-post" hidden>
+    <div class="card">
+      <h2>منشور جديد</h2>
+      <label>الصفحة</label>
+      <div id="accList" class="muted">جارٍ تحميل الصفحات...</div>
+      <label for="content">النص</label>
+      <textarea id="content" placeholder="اكتب منشورك هنا..."></textarea>
+      <label for="media">صور أو فيديو (اختياري)</label>
+      <input id="media" type="file" accept="image/*,video/*" multiple>
+      <div id="thumbs" class="thumbs"></div>
+      <div class="seg" role="group" aria-label="وقت النشر">
+        <button type="button" id="modeNow" aria-pressed="true">انشر الآن</button>
+        <button type="button" id="modeLater" aria-pressed="false">جدولة</button>
+      </div>
+      <div id="whenBox" hidden>
+        <label for="when">التاريخ والوقت</label>
+        <input id="when" type="datetime-local">
+        <p class="muted" id="tzNote"></p>
+      </div>
+      <button class="btn" id="submitPost" type="button">انشر الآن</button>
+      <div id="postMsg"></div>
+    </div>
+  </section>
+
+  <!-- المنشورات -->
+  <section id="v-posts" hidden>
+    <div class="card">
+      <div class="row"><h2>منشوراتي</h2><button class="btn ghost" id="reloadPosts" type="button" style="flex:0 0 auto">تحديث</button></div>
+      <div class="seg" role="group" aria-label="الحالة" id="statusSeg">
+        <button type="button" data-s="scheduled" aria-pressed="true">مجدولة</button>
+        <button type="button" data-s="published" aria-pressed="false">منشورة</button>
+        <button type="button" data-s="failed" aria-pressed="false">فشلت</button>
+      </div>
+      <div id="postsList"></div>
+    </div>
+  </section>
+
+  <!-- الرسائل والتعليقات -->
+  <section id="v-inbox" hidden>
+    <div class="seg" role="group" aria-label="نوع الصندوق">
+      <button type="button" id="tabMsgs" aria-pressed="true">الرسائل</button>
+      <button type="button" id="tabCmts" aria-pressed="false">التعليقات</button>
+    </div>
+    <div class="card" id="inboxListCard">
+      <div class="row"><h2 id="inboxTitle">المحادثات</h2><button class="btn ghost" id="reloadInbox" type="button" style="flex:0 0 auto">تحديث</button></div>
+      <div id="inboxList"></div>
+    </div>
+    <div class="card" id="threadCard" hidden>
+      <div class="row"><button class="btn ghost" id="backInbox" type="button" style="flex:0 0 auto">رجوع</button><h2 id="threadTitle"></h2></div>
+      <div id="thread" class="thread"></div>
+      <p class="muted" id="replyTarget" hidden></p>
+      <label for="replyText">ردّك</label>
+      <textarea id="replyText" style="min-height:70px"></textarea>
+      <button class="btn" id="sendReply" type="button">إرسال</button>
+      <div id="threadMsg"></div>
+    </div>
+  </section>
+
+  <!-- الرد التلقائي -->
+  <section id="v-auto" hidden>
+    <div class="card">
+      <h2>رسالة تلقائية لكل من يعلّق</h2>
+      <p class="muted">عندما يعلّق شخص على منشورك، تصله رسالة خاصة على ماسنجر تلقائيًا، ويمكن أيضًا الرد على تعليقه علنًا.</p>
+      <label for="aName">اسم القاعدة (لك فقط)</label>
+      <input id="aName" placeholder="مثال: إرسال الأسعار">
+      <label for="aAcc">الصفحة</label>
+      <select id="aAcc"></select>
+      <label for="aScope">على أي منشورات؟</label>
+      <select id="aScope"><option value="">كل منشورات الصفحة</option></select>
+      <label for="aKeys">كلمات التفعيل (اختياري)</label>
+      <input id="aKeys" placeholder="مثال: سعر، بكم، prix">
+      <p class="muted">افصل بينها بفاصلة. اتركها فارغة لترسل الرسالة لكل من يعلّق.</p>
+      <label for="aDm">الرسالة الخاصة</label>
+      <textarea id="aDm" maxlength="640">أهلًا {{first_name}}، شكرًا على تعليقك! هذه التفاصيل التي طلبتها:</textarea>
+      <p class="muted">‏{{first_name}} يُستبدل باسم الشخص تلقائيًا.</p>
+      <div class="row">
+        <div><label for="aBtnTitle">زر داخل الرسالة (اختياري)</label><input id="aBtnTitle" maxlength="20" placeholder="اطلب الآن"></div>
+        <div><label for="aBtnUrl">رابط الزر</label><input id="aBtnUrl" type="url" placeholder="https://..."></div>
+      </div>
+      <label for="aReply">رد علني على التعليق (اختياري)</label>
+      <input id="aReply" placeholder="أرسلنا لك التفاصيل في الخاص 📩">
+      <label class="acc" style="cursor:pointer"><input type="checkbox" id="aEvery"> أرسل الرسالة مع كل تعليق، وليس أول مرة فقط</label>
+      <button class="btn" id="aCreate" type="button">تفعيل الرد التلقائي</button>
+      <div id="aMsg"></div>
+    </div>
+    <div class="card">
+      <div class="row"><h2>القواعد الحالية</h2><button class="btn ghost" id="reloadAuto" type="button" style="flex:0 0 auto">تحديث</button></div>
+      <div id="autoList"></div>
+    </div>
+  </section>
+
+  <!-- الإحصائيات -->
+  <section id="v-stats" hidden>
+    <div class="card">
+      <div class="row"><h2>آخر 30 يومًا</h2><button class="btn ghost" id="reloadStats" type="button" style="flex:0 0 auto">تحديث</button></div>
+      <div id="overview"></div>
+    </div>
+    <div class="card">
+      <h2>أداء كل منشور</h2>
+      <div id="statsList"></div>
+    </div>
+  </section>
+</main>
+
+<nav aria-label="الأقسام">
+  <button type="button" data-v="post" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>نشر</button>
+  <button type="button" data-v="posts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>منشوراتي</button>
+  <button type="button" data-v="inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v11H9l-5 4z"/></svg>الصندوق</button>
+  <button type="button" data-v="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>إحصائيات</button>
+  <button type="button" data-v="auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>رد تلقائي</button>
+</nav>
+
+<script>
+(function(){
+const BASE = "https://zernio.com/api";
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return localStorage.getItem(k) || ""; }catch(e){ return ""; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+let KEY = store.get("zernio_key");
+let PLATFORM = store.get("zernio_platform"); if (PLATFORM === "") PLATFORM = store.get("zernio_platform_set") ? "" : "facebook";
+const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+let accounts = [];
+
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function note(el, text, kind){ $(el).innerHTML = text ? '<div class="note '+(kind||"")+'">'+esc(text)+'</div>' : ""; }
+function fmtDate(s){ if(!s) return ""; const d = new Date(s); return isNaN(d) ? s : d.toLocaleString("ar-DZ",{dateStyle:"medium",timeStyle:"short"}); }
+function num(n){ return (typeof n === "number" ? n : 0).toLocaleString("ar-DZ"); }
+
+async function api(path, opts){
+  opts = opts || {};
+  if (!KEY) throw new Error("أضف مفتاح API أولًا من الإعدادات.");
+  const url = new URL(BASE + path);
+  Object.entries(opts.query || {}).forEach(([k,v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, v); });
+  const headers = { "Authorization": "Bearer " + KEY };
+  if (opts.body) headers["Content-Type"] = "application/json";
+  let res;
+  try {
+    res = await fetch(url, { method: opts.method || "GET", headers, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  } catch (e) {
+    throw new Error("تعذّر الوصول إلى Zernio. تحقق من الإنترنت. إن استمر الخطأ فقد يمنع Zernio الطلبات من المتصفح، فافتح التطبيق من رابط https مستضاف بدل فتح الملف مباشرة.");
+  }
+  let data = null; try { data = await res.json(); } catch(e) {}
+  if (!res.ok && res.status !== 207) {
+    if (res.status === 401) throw new Error("مفتاح API غير صحيح أو منتهي. راجعه في الإعدادات.");
+    if (res.status === 402 || res.status === 403) throw new Error((data && data.error) || "هذه الميزة غير مفعّلة في حسابك على Zernio.");
+    if (res.status === 429) throw new Error("طلبات كثيرة في وقت قصير. انتظر دقيقة ثم أعد المحاولة.");
+    throw new Error((data && (data.error || data.message)) || ("خطأ من Zernio (" + res.status + ")"));
+  }
+  return data || {};
+}
+
+/* ---------- navigation ---------- */
+const views = ["post","posts","inbox","auto","stats","settings","lock"];
+let locked = false;
+function show(v){
+  if (locked && v !== "lock") v = "lock";
+  views.forEach(x => $("v-"+x).hidden = x !== v);
+  document.querySelector("nav").hidden = v === "lock";
+  $("settingsBtn").hidden = v === "lock";
+  $("lockBtn").hidden = v === "lock" || !store.get("zernio_vault");
+  if (v === "lock") { setTimeout(() => $("unlockPw").focus(), 50); return; }
+  document.querySelectorAll("nav button").forEach(b => { if (b.dataset.v === v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  if (!KEY && v !== "settings") { show("settings"); return; }
+  if (v === "post" && !accounts.length) loadAccounts().catch(e => { $("accList").innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; });
+  if (v === "posts") loadPosts();
+  if (v === "inbox") loadInbox();
+  if (v === "stats") loadStats();
+  if (v === "auto") loadAuto();
+  if (v === "settings" && KEY) loadBalance();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav button").forEach(b => b.addEventListener("click", () => show(b.dataset.v)));
+$("settingsBtn").addEventListener("click", () => show("settings"));
+
+/* ---------- password lock (API key encrypted with AES-GCM, key derived from the password) ---------- */
+const CRYPTO_OK = !!(window.crypto && crypto.subtle && window.isSecureContext);
+let PW = null; // kept in memory only while unlocked, to re-encrypt on settings changes
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+async function deriveKey(pw, salt){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" }, base, { name: "AES-GCM", length: 256 }, false, ["encrypt","decrypt"]);
+}
+async function sealKey(apiKey, pw){
+  const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await deriveKey(pw, salt), new TextEncoder().encode(apiKey));
+  store.set("zernio_vault", JSON.stringify({ salt: b64(salt), iv: b64(iv), ct: b64(ct) }));
+  store.del("zernio_key");
+}
+async function openVault(pw){
+  const v = JSON.parse(store.get("zernio_vault"));
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(v.iv) }, await deriveKey(pw, unb64(v.salt)), unb64(v.ct));
+  return new TextDecoder().decode(pt);
+}
+function lockNow(){
+  KEY = ""; PW = null; accounts = []; locked = true;
+  $("keyInput").value = ""; $("unlockPw").value = ""; note("lockMsg","");
+  show("lock");
+}
+async function unlock(){
+  const pw = $("unlockPw").value;
+  if (!pw) return note("lockMsg","أدخل كلمة المرور.","err");
+  if (!CRYPTO_OK) return note("lockMsg","افتح التطبيق من رابط https (مثل GitHub Pages) لتعمل كلمة المرور.","err");
+  $("unlockBtn").disabled = true;
+  try {
+    KEY = await openVault(pw); PW = pw; locked = false;
+    $("unlockPw").value = ""; $("keyInput").value = KEY; note("lockMsg","");
+    show("post");
+  } catch (e) { note("lockMsg","كلمة المرور غير صحيحة.","err"); }
+  $("unlockBtn").disabled = false;
+}
+$("unlockBtn").addEventListener("click", unlock);
+$("unlockPw").addEventListener("keydown", e => { if (e.key === "Enter") unlock(); });
+$("lockBtn").addEventListener("click", lockNow);
+$("forgotBtn").addEventListener("click", () => { $("forgotBox").hidden = false; });
+$("wipeBtn").addEventListener("click", () => {
+  if ($("wipeBtn").dataset.armed !== "1") { $("wipeBtn").dataset.armed = "1"; $("wipeBtn").textContent = "اضغط مرة أخرى للتأكيد"; return; }
+  store.del("zernio_vault"); store.del("zernio_key"); KEY = ""; PW = null; locked = false;
+  $("forgotBox").hidden = true; $("wipeBtn").dataset.armed = ""; $("wipeBtn").textContent = "مسح والبدء من جديد";
+  show("settings"); note("settingsMsg","تم المسح. أدخل مفتاح API وكلمة مرور جديدة.","ok");
+});
+// lock again after 5 minutes in the background
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) hiddenAt = Date.now();
+  else if (store.get("zernio_vault") && !locked && hiddenAt && Date.now() - hiddenAt > 5 * 60e3) lockNow();
+});
+
+/* ---------- settings ---------- */
+$("keyInput").value = KEY;
+$("platformSel").value = PLATFORM;
+if (!CRYPTO_OK) $("pwHint").textContent = "كلمة المرور تعمل فقط عند فتح التطبيق من رابط https مثل GitHub Pages.";
+$("saveKey").addEventListener("click", async () => {
+  const newKey = $("keyInput").value.trim(), p1 = $("pw1").value, p2 = $("pw2").value;
+  if (!newKey) return note("settingsMsg","الصق مفتاح API أولًا.","err");
+  if (p1 || p2) {
+    if (p1.length < 4) return note("settingsMsg","كلمة المرور قصيرة، استعمل 4 أحرف على الأقل.","err");
+    if (p1 !== p2) return note("settingsMsg","كلمتا المرور غير متطابقتين.","err");
+  }
+  const pw = p1 || PW;
+  KEY = newKey;
+  PLATFORM = $("platformSel").value;
+  store.set("zernio_platform", PLATFORM); store.set("zernio_platform_set","1");
+  if (pw && CRYPTO_OK) {
+    try { await sealKey(KEY, pw); PW = pw; $("pw1").value = ""; $("pw2").value = ""; }
+    catch (e) { return note("settingsMsg","تعذّر تشفير المفتاح على هذا المتصفح.","err"); }
+  } else {
+    store.set("zernio_key", KEY);
+  }
+  $("lockBtn").hidden = !store.get("zernio_vault");
+  accounts = [];
+  note("settingsMsg","جارٍ الاختبار...");
+  try {
+    await loadAccounts();
+    note("settingsMsg", "تم الاتصال. عدد الحسابات: " + accounts.length + (store.get("zernio_vault") ? ". التطبيق محمي بكلمة المرور." : ". لم تضع كلمة مرور بعد."), "ok");
+    loadBalance();
+  } catch (e) { note("settingsMsg", e.message, "err"); }
+});
+$("clearKey").addEventListener("click", () => {
+  KEY = ""; PW = null; store.del("zernio_key"); store.del("zernio_vault"); $("keyInput").value = ""; accounts = [];
+  $("lockBtn").hidden = true;
+  note("settingsMsg","تم حذف المفتاح وكلمة المرور من هذا الهاتف.","ok");
+});
+
+/* ---------- accounts ---------- */
+function accName(a){ return a.displayName || a.name || a.username || a.pageName || a.platform; }
+function accId(a){ return a._id || a.id || a.accountId; }
+async function loadAccounts(){
+  $("accList").textContent = "جارٍ تحميل الصفحات...";
+  const d = await api("/v1/accounts", { query: { platform: PLATFORM, status: "connected" } });
+  accounts = (d.accounts || d.data || []);
+  if (!accounts.length) {
+    $("accList").innerHTML = '<div class="note">لا توجد صفحات مربوطة. اربط صفحتك على فيسبوك من لوحة Zernio أولًا.</div>';
+    return;
+  }
+  $("accList").innerHTML = accounts.map((a,i) =>
+    '<label class="acc"><input type="checkbox" class="accChk" value="'+i+'" '+(i===0?"checked":"")+'>' +
+    (a.profilePicture ? '<img src="'+esc(a.profilePicture)+'" alt="">' : '<img alt="">') +
+    '<span><b>'+esc(accName(a))+'</b><br><span class="muted">'+esc(a.platform)+'</span></span></label>').join("");
+}
+
+/* ---------- compose ---------- */
+let mode = "now";
+function setMode(m){
+  mode = m;
+  $("modeNow").setAttribute("aria-pressed", m === "now");
+  $("modeLater").setAttribute("aria-pressed", m === "later");
+  $("whenBox").hidden = m !== "later";
+  $("submitPost").textContent = m === "now" ? "انشر الآن" : "جدولة المنشور";
+}
+$("modeNow").addEventListener("click", () => setMode("now"));
+$("modeLater").addEventListener("click", () => setMode("later"));
+$("tzNote").textContent = "بتوقيت هاتفك: " + TZ;
+(function(){ const d = new Date(Date.now() + 3600e3); d.setMinutes(0,0,0);
+  const p = n => String(n).padStart(2,"0");
+  $("when").value = d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"T"+p(d.getHours())+":00"; })();
+
+$("media").addEventListener("change", () => {
+  $("thumbs").innerHTML = "";
+  [...$("media").files].forEach(f => {
+    const u = URL.createObjectURL(f);
+    const el = document.createElement(f.type.startsWith("video") ? "video" : "img");
+    el.src = u; if (el.tagName === "VIDEO") el.muted = true;
+    $("thumbs").appendChild(el);
+  });
+});
+
+async function uploadFile(f){
+  const pre = await api("/v1/media/presign", { method: "POST", body: { filename: f.name, contentType: f.type, size: f.size } });
+  let r;
+  try { r = await fetch(pre.uploadUrl, { method: "PUT", headers: { "Content-Type": f.type }, body: f }); }
+  catch (e) { throw new Error("تعذّر رفع الملف " + f.name + ". جرّب ملفًا أصغر أو اتصالًا أفضل."); }
+  if (!r.ok) throw new Error("رُفض رفع الملف " + f.name + " (" + r.status + ").");
+  const type = f.type.startsWith("video") ? "video" : (f.type === "image/gif" ? "gif" : "image");
+  return { type, url: pre.publicUrl };
+}
+
+$("submitPost").addEventListener("click", async () => {
+  const btn = $("submitPost");
+  const chosen = [...document.querySelectorAll(".accChk:checked")].map(c => accounts[+c.value]);
+  const text = $("content").value.trim();
+  const files = [...$("media").files];
+  if (!chosen.length) return note("postMsg","اختر صفحة واحدة على الأقل.","err");
+  if (!text && !files.length) return note("postMsg","اكتب نصًا أو أضف صورة.","err");
+  if (mode === "later" && !$("when").value) return note("postMsg","حدّد تاريخ ووقت النشر.","err");
+  if (mode === "later" && new Date($("when").value) < new Date()) return note("postMsg","الوقت المختار مضى. اختر وقتًا في المستقبل.","err");
+  btn.disabled = true;
+  try {
+    const mediaItems = [];
+    for (let i = 0; i < files.length; i++) {
+      note("postMsg","جارٍ رفع الملف " + (i+1) + " من " + files.length + "...");
+      mediaItems.push(await uploadFile(files[i]));
+    }
+    note("postMsg", mode === "now" ? "جارٍ النشر..." : "جارٍ الجدولة...");
+    const body = { content: text, platforms: chosen.map(a => ({ platform: a.platform, accountId: accId(a) })) };
+    if (mediaItems.length) body.mediaItems = mediaItems;
+    if (mode === "now") body.publishNow = true;
+    else { body.scheduledFor = $("when").value + ":00"; body.timezone = TZ; }
+    const r = await api("/v1/posts", { method: "POST", body });
+    const post = r.post || r;
+    const link = (post.platforms || []).map(p => p.platformPostUrl).filter(Boolean)[0];
+    if (mode === "now") $("postMsg").innerHTML = '<div class="note ok">تم النشر.' + (link ? ' <a href="'+esc(link)+'" target="_blank" rel="noopener">افتح المنشور</a>' : "") + '</div>';
+    else note("postMsg","تمت الجدولة في " + fmtDate($("when").value),"ok");
+    $("content").value = ""; $("media").value = ""; $("thumbs").innerHTML = "";
+  } catch (e) { note("postMsg", e.message, "err"); }
+  btn.disabled = false;
+});
+
+/* ---------- posts ---------- */
+let postStatus = "scheduled";
+const statusAr = { scheduled:"مجدول", published:"منشور", failed:"فشل", partial:"نُشر جزئيًا", draft:"مسودة", publishing:"قيد النشر", cancelled:"ملغى", pending_approval:"بانتظار الموافقة" };
+document.querySelectorAll("#statusSeg button").forEach(b => b.addEventListener("click", () => {
+  postStatus = b.dataset.s;
+  document.querySelectorAll("#statusSeg button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  loadPosts();
+}));
+$("reloadPosts").addEventListener("click", loadPosts);
+async function loadPosts(){
+  const box = $("postsList"); box.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  try {
+    const d = await api("/v1/posts", { query: { status: postStatus, platform: PLATFORM, limit: 50 } });
+    const posts = d.posts || d.data || [];
+    if (!posts.length) { box.innerHTML = '<p class="muted">لا توجد منشورات هنا.</p>'; return; }
+    box.innerHTML = posts.map(p => {
+      const when = p.scheduledFor || (p.platforms && p.platforms[0] && p.platforms[0].publishedAt) || p.createdAt;
+      const link = (p.platforms || []).map(x => x.platformPostUrl).filter(Boolean)[0];
+      const err = (p.platforms || []).map(x => x.errorMessage).filter(Boolean)[0];
+      const canDel = p.status !== "published";
+      return '<div class="item"><div class="row" style="justify-content:space-between"><span class="pill s-'+esc(p.status)+'" style="flex:0 0 auto">'+esc(statusAr[p.status]||p.status)+'</span><span class="muted" style="flex:0 0 auto">'+esc(fmtDate(when))+'</span></div>' +
+        '<p>'+esc((p.content||"").slice(0,400))+'</p>' +
+        (err ? '<p class="note err">'+esc(err)+'</p>' : "") +
+        '<div class="row">' + (link ? '<a class="btn ghost" style="text-align:center;text-decoration:none" href="'+esc(link)+'" target="_blank" rel="noopener">افتح على فيسبوك</a>' : "") +
+        (canDel ? '<button class="btn danger delPost" type="button" data-id="'+esc(p._id)+'">حذف</button>' : "") + '</div></div>';
+    }).join("");
+    box.querySelectorAll(".delPost").forEach(b => b.addEventListener("click", () => confirmDelete(b)));
+  } catch (e) { box.innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+function confirmDelete(b){
+  if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "اضغط مرة أخرى للتأكيد"; setTimeout(() => { b.dataset.armed = ""; b.textContent = "حذف"; }, 4000); return; }
+  b.disabled = true; b.textContent = "جارٍ الحذف...";
+  api("/v1/posts/" + encodeURIComponent(b.dataset.id), { method: "DELETE" })
+    .then(loadPosts)
+    .catch(e => { b.disabled = false; b.textContent = "حذف"; b.insertAdjacentHTML("afterend", '<div class="note err">'+esc(e.message)+'</div>'); });
+}
+
+/* ---------- inbox ---------- */
+let inboxMode = "msgs", current = null;
+$("tabMsgs").addEventListener("click", () => { inboxMode = "msgs"; $("tabMsgs").setAttribute("aria-pressed","true"); $("tabCmts").setAttribute("aria-pressed","false"); loadInbox(); });
+$("tabCmts").addEventListener("click", () => { inboxMode = "cmts"; $("tabCmts").setAttribute("aria-pressed","true"); $("tabMsgs").setAttribute("aria-pressed","false"); loadInbox(); });
+$("reloadInbox").addEventListener("click", loadInbox);
+$("backInbox").addEventListener("click", () => { $("threadCard").hidden = true; $("inboxListCard").hidden = false; });
+
+async function loadInbox(){
+  $("threadCard").hidden = true; $("inboxListCard").hidden = false;
+  $("inboxTitle").textContent = inboxMode === "msgs" ? "المحادثات" : "منشورات عليها تعليقات";
+  const box = $("inboxList"); box.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  try {
+    if (inboxMode === "msgs") {
+      const d = await api("/v1/inbox/conversations", { query: { platform: PLATFORM, limit: 50 } });
+      const list = d.data || d.conversations || [];
+      if (!list.length) { box.innerHTML = '<p class="muted">لا توجد محادثات.</p>'; return; }
+      box.innerHTML = list.map((c,i) => '<div class="item tap" data-i="'+i+'" role="button" tabindex="0"><div class="row" style="justify-content:space-between"><b style="flex:0 1 auto">'+esc(c.participantName || "مستخدم")+'</b>' +
+        (c.unreadCount ? '<span class="pill s-scheduled" style="flex:0 0 auto">'+num(c.unreadCount)+' جديد</span>' : "") + '</div>' +
+        '<p class="muted">'+esc((c.lastMessage||"").slice(0,120))+'</p><span class="muted">'+esc(fmtDate(c.updatedTime))+'</span></div>').join("");
+      box.querySelectorAll(".item").forEach(el => el.addEventListener("click", () => openConversation(list[+el.dataset.i])));
+    } else {
+      const d = await api("/v1/inbox/comments", { query: { platform: PLATFORM, limit: 30 } });
+      const list = d.data || [];
+      if (!list.length) { box.innerHTML = '<p class="muted">لا توجد تعليقات.</p>'; return; }
+      box.innerHTML = list.map((p,i) => '<div class="item tap" data-i="'+i+'" role="button" tabindex="0"><div class="row" style="justify-content:space-between"><span class="muted" style="flex:0 0 auto">'+esc(fmtDate(p.createdTime))+'</span><span class="pill s-published" style="flex:0 0 auto">'+num(p.commentCount)+' تعليق</span></div>' +
+        '<p>'+esc((p.content||"منشور بدون نص").slice(0,160))+'</p></div>').join("");
+      box.querySelectorAll(".item").forEach(el => el.addEventListener("click", () => openComments(list[+el.dataset.i])));
+    }
+  } catch (e) { box.innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+
+async function openConversation(c){
+  current = { kind: "msg", c };
+  $("inboxListCard").hidden = true; $("threadCard").hidden = false;
+  $("threadTitle").textContent = c.participantName || "محادثة";
+  $("replyTarget").hidden = true; note("threadMsg","");
+  const t = $("thread"); t.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  try {
+    const d = await api("/v1/inbox/conversations/" + encodeURIComponent(c.id) + "/messages", { query: { accountId: c.accountId, limit: 50, sortOrder: "asc" } });
+    let msgs = d.messages || d.data || [];
+    msgs = msgs.slice().sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
+    t.innerHTML = msgs.map(m => '<div class="msg '+(m.direction === "outgoing" ? "out" : "in")+'">'+esc(m.message || (m.attachments && m.attachments.length ? "[مرفق]" : ""))+'</div>').join("") || '<p class="muted">لا توجد رسائل.</p>';
+    t.scrollTop = t.scrollHeight;
+  } catch (e) { t.innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+
+async function openComments(p){
+  current = { kind: "cmt", p, commentId: null };
+  $("inboxListCard").hidden = true; $("threadCard").hidden = false;
+  $("threadTitle").textContent = "التعليقات";
+  $("replyTarget").hidden = false; $("replyTarget").textContent = "اضغط على تعليق للرد عليه، أو اكتب تعليقًا جديدًا على المنشور.";
+  note("threadMsg","");
+  const t = $("thread"); t.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  try {
+    const d = await api("/v1/inbox/comments/" + encodeURIComponent(p.id), { query: { accountId: p.accountId, limit: 50 } });
+    const cs = d.comments || d.data || [];
+    const render = (c, reply) => '<div class="msg in tap cmt" style="'+(reply?"margin-inline-start:24px;":"")+'" data-id="'+esc(c.id)+'" data-name="'+esc(c.from && c.from.name || "")+'"><b>'+esc(c.from && (c.from.name || c.from.username) || "مستخدم")+'</b><br>'+esc(c.message || "")+'<br><span class="muted">'+esc(fmtDate(c.createdTime))+'</span></div>';
+    t.innerHTML = cs.map(c => render(c) + (c.replies || []).map(r => render(r, true)).join("")).join("") || '<p class="muted">لا توجد تعليقات.</p>';
+    t.querySelectorAll(".cmt").forEach(el => el.addEventListener("click", () => {
+      t.querySelectorAll(".cmt").forEach(x => x.style.outline = "");
+      el.style.outline = "2px solid var(--gold)";
+      current.commentId = el.dataset.id;
+      $("replyTarget").textContent = "ستردّ على: " + (el.dataset.name || "هذا التعليق");
+    }));
+  } catch (e) { t.innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+
+$("sendReply").addEventListener("click", async () => {
+  const text = $("replyText").value.trim();
+  if (!text || !current) return note("threadMsg","اكتب ردّك أولًا.","err");
+  const b = $("sendReply"); b.disabled = true;
+  try {
+    if (current.kind === "msg") {
+      await api("/v1/inbox/conversations/" + encodeURIComponent(current.c.id) + "/messages", { method: "POST", body: { accountId: current.c.accountId, message: text } });
+      $("replyText").value = ""; note("threadMsg","أُرسلت الرسالة.","ok");
+      openConversation(current.c);
+    } else {
+      const body = { accountId: current.p.accountId, message: text };
+      if (current.commentId) body.commentId = current.commentId;
+      await api("/v1/inbox/comments/" + encodeURIComponent(current.p.id), { method: "POST", body });
+      $("replyText").value = ""; note("threadMsg","نُشر الرد. قد يتأخر ظهوره هنا بضع دقائق.","ok");
+    }
+  } catch (e) { note("threadMsg", e.message, "err"); }
+  b.disabled = false;
+});
+
+/* ---------- comment-to-DM automations ---------- */
+let profileFallback = null;
+async function profileOf(a){
+  const p = a.profileId;
+  if (p && typeof p === "object") return p._id || p.id;
+  if (p) return p;
+  if (!profileFallback) {
+    const d = await api("/v1/profiles");
+    const list = d.profiles || d.data || [];
+    profileFallback = list[0] && (list[0]._id || list[0].id);
+  }
+  if (!profileFallback) throw new Error("لم أجد ملفًا (Profile) في حسابك على Zernio.");
+  return profileFallback;
+}
+async function fillAutoForm(){
+  if (!accounts.length) await loadAccounts();
+  const dmCapable = accounts.filter(a => a.platform === "facebook" || a.platform === "instagram");
+  $("aAcc").innerHTML = dmCapable.map(a => '<option value="'+accounts.indexOf(a)+'">'+esc(accName(a))+' ('+esc(a.platform)+')</option>').join("")
+    || '<option value="">لا توجد صفحة فيسبوك مربوطة</option>';
+  try {
+    const d = await api("/v1/posts", { query: { status: "published", platform: PLATFORM, limit: 20 } });
+    const posts = d.posts || d.data || [];
+    $("aScope").innerHTML = '<option value="">كل منشورات الصفحة</option>' +
+      posts.map(p => '<option value="'+esc(p._id)+'">منشور: '+esc((p.content||"بدون نص").slice(0,50))+'</option>').join("");
+  } catch (e) {}
+}
+$("reloadAuto").addEventListener("click", loadAuto);
+async function loadAuto(){
+  fillAutoForm().catch(e => note("aMsg", e.message, "err"));
+  const box = $("autoList"); box.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  try {
+    const d = await api("/v1/comment-automations");
+    let list = d.automations || d.data || [];
+    if (PLATFORM) list = list.filter(a => a.platform === PLATFORM);
+    if (!list.length) { box.innerHTML = '<p class="muted">لا توجد قواعد بعد. أنشئ أول قاعدة من الأعلى.</p>'; return; }
+    box.innerHTML = list.map(a => {
+      const s = a.stats || {};
+      return '<div class="item"><div class="row" style="justify-content:space-between"><b style="flex:0 1 auto">'+esc(a.name)+'</b>' +
+        '<span class="pill '+(a.isActive ? "s-published" : "s-draft")+'" style="flex:0 0 auto">'+(a.isActive ? "مفعّلة" : "متوقفة")+'</span></div>' +
+        '<span class="muted">'+(a.platformPostId || a.postId ? "منشور محدد" : "كل المنشورات")+' · '+(a.keywords && a.keywords.length ? "الكلمات: " + esc(a.keywords.join("، ")) : "أي تعليق")+'</span>' +
+        '<p>'+esc((a.dmMessage||"").slice(0,160))+'</p>' +
+        '<div class="stats"><div class="stat"><b>'+num(s.triggered)+'</b><span>تعليقات</span></div><div class="stat"><b>'+num(s.dmsSent)+'</b><span>رسائل أُرسلت</span></div><div class="stat"><b>'+num(s.dmsFailed)+'</b><span>فشلت</span></div></div>' +
+        '<div class="row"><button class="btn ghost aToggle" type="button" data-id="'+esc(a.id)+'" data-on="'+(a.isActive?1:0)+'">'+(a.isActive ? "إيقاف" : "تشغيل")+'</button>' +
+        '<button class="btn danger aDel" type="button" data-id="'+esc(a.id)+'">حذف</button></div></div>';
+    }).join("");
+    box.querySelectorAll(".aToggle").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true;
+      try { await api("/v1/comment-automations/" + encodeURIComponent(b.dataset.id), { method: "PATCH", body: { isActive: b.dataset.on !== "1" } }); loadAuto(); }
+      catch (e) { b.disabled = false; b.insertAdjacentHTML("afterend", '<div class="note err">'+esc(e.message)+'</div>'); }
+    }));
+    box.querySelectorAll(".aDel").forEach(b => b.addEventListener("click", async () => {
+      if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "اضغط مرة أخرى للتأكيد"; setTimeout(() => { b.dataset.armed = ""; b.textContent = "حذف"; }, 4000); return; }
+      b.disabled = true;
+      try { await api("/v1/comment-automations/" + encodeURIComponent(b.dataset.id), { method: "DELETE" }); loadAuto(); }
+      catch (e) { b.disabled = false; b.insertAdjacentHTML("afterend", '<div class="note err">'+esc(e.message)+'</div>'); }
+    }));
+  } catch (e) { box.innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+$("aCreate").addEventListener("click", async () => {
+  const a = accounts[+$("aAcc").value];
+  const dm = $("aDm").value.trim();
+  const bt = $("aBtnTitle").value.trim(), bu = $("aBtnUrl").value.trim();
+  if (!a) return note("aMsg","اختر صفحة فيسبوك.","err");
+  if (!dm) return note("aMsg","اكتب نص الرسالة الخاصة.","err");
+  if ((bt && !bu) || (!bt && bu)) return note("aMsg","للزر تحتاج اسمًا ورابطًا معًا، أو اترك الاثنين فارغين.","err");
+  if (bu && !/^https?:\/\//i.test(bu)) return note("aMsg","رابط الزر يجب أن يبدأ بـ https://","err");
+  const b = $("aCreate"); b.disabled = true; note("aMsg","جارٍ التفعيل...");
+  try {
+    const body = {
+      profileId: await profileOf(a),
+      accountId: accId(a),
+      name: $("aName").value.trim() || "رد تلقائي",
+      dmMessage: dm,
+      keywords: $("aKeys").value.split(/[,،]/).map(s => s.trim()).filter(Boolean),
+      repeatPolicy: $("aEvery").checked ? "every_comment" : "once",
+      isActive: true
+    };
+    if ($("aScope").value) body.postId = $("aScope").value;
+    if ($("aReply").value.trim()) body.commentReply = $("aReply").value.trim();
+    if (bt) body.buttons = [{ type: "url", title: bt, url: bu }];
+    await api("/v1/comment-automations", { method: "POST", body });
+    note("aMsg","تم التفعيل. كل تعليق جديد من الآن سيصل صاحبه رسالة خاصة.","ok");
+    loadAuto();
+  } catch (e) { note("aMsg", e.message, "err"); }
+  b.disabled = false;
+});
+
+/* ---------- monthly balance ---------- */
+const usd = n => "$" + (Number(n) || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const cents = c => usd((Number(c) || 0) / 100);
+function socialEstimate(n){
+  // 2 free, then $6 (3-10), $3 (11-100), $1 (101+), each band only for accounts inside it
+  let t = 0;
+  for (let i = 3; i <= n; i++) t += i <= 10 ? 6 : i <= 100 ? 3 : 1;
+  return t;
+}
+const productAr = { accounts:"الحسابات المربوطة", messages:"رسائل الصندوق", ads:"الإعلانات", xApi:"منصة X", sms:"رسائل SMS", calls:"المكالمات", numbers:"أرقام الهاتف", imessage:"iMessage", verify:"التحقق", dlc:"تسجيل الأرقام", credits:"أرصدة مخصومة", other:"أخرى" };
+$("reloadBalance").addEventListener("click", loadBalance);
+async function loadBalance(){
+  const box = $("balance"); box.innerHTML = '<p class="muted">جارٍ التحميل...</p>';
+  const [bill, snap, meter] = await Promise.allSettled([
+    api("/v1/billing"),
+    api("/v1/usage"),
+    api("/v1/usage", { query: { range: "cycle", granularity: "total" } })
+  ]);
+  if (bill.status === "rejected" && snap.status === "rejected") { box.innerHTML = '<div class="note err">'+esc(bill.reason.message)+'</div>'; return; }
+  const b = bill.value || {}, s = snap.value || {}, m = meter.value || {};
+  const usage = s.usage || {}, spend = s.spend || {};
+  const period = b.period || m.period || {};
+  const st = b.status || {};
+  let html = "";
+
+  if (st.suspended || st.hasAccess === false) {
+    html += '<div class="note err">الحساب موقوف' + (st.suspensionReason ? ": " + esc(st.suspensionReason) : "") + '.' +
+      (st.openInvoiceUrl ? ' <a href="'+esc(st.openInvoiceUrl)+'" target="_blank" rel="noopener">ادفع الفاتورة</a>' : "") + '</div>';
+  }
+
+  const spent = typeof spend.currentPeriodCents === "number" ? spend.currentPeriodCents / 100 : (m.totals && m.totals.total);
+  const nAcc = typeof usage.connectedAccounts === "number" ? usage.connectedAccounts : accounts.length;
+  html += '<div class="stats">' +
+    '<div class="stat"><b>'+(spent != null ? usd(spent) : "—")+'</b><span>المصروف حتى الآن</span></div>' +
+    '<div class="stat"><b>'+(typeof spend.creditsRemainingCents === "number" ? cents(spend.creditsRemainingCents) : "—")+'</b><span>الرصيد المتبقي</span></div>' +
+    '<div class="stat"><b>'+num(nAcc)+'</b><span>حسابات مربوطة</span></div></div>';
+
+  const plan = b.plan && b.plan.name;
+  const day = x => new Date(x).toLocaleDateString("ar-DZ", { day: "numeric", month: "long" });
+  const dates = period.start && period.end ? day(period.start) + " إلى " + day(period.end) : "";
+  html += '<p class="muted">' + (plan ? "الخطة: " + esc(plan) + " · " : "") + (dates ? "الدورة: " + esc(dates) : (b.period && b.period.anchorDay ? "تتجدد يوم " + b.period.anchorDay + " من كل شهر" : "")) + '</p>';
+
+  const free = Math.max(0, 2 - nAcc);
+  html += '<div class="note">' + (nAcc <= 2
+    ? 'أنت ضمن المجاني: ' + num(nAcc) + ' من 2 حساب مجاني' + (free ? '، يمكنك ربط ' + num(free) + ' آخر مجانًا.' : '. الحساب الثالث يكلف 6$ شهريًا.')
+    : 'تكلفة الحسابات المتوقعة هذا الشهر: ' + usd(socialEstimate(nAcc)) + ' (أول حسابين مجانيين).') + '</div>';
+
+  const totals = m.totals || {};
+  const lines = Object.keys(productAr).filter(k => Number(totals[k]) > 0);
+  if (lines.length) {
+    html += '<div class="item"><b>تفاصيل المصروف</b>' + lines.map(k =>
+      '<div class="row" style="justify-content:space-between"><span style="flex:0 1 auto">'+productAr[k]+'</span><b style="flex:0 0 auto;font-variant-numeric:tabular-nums">'+usd(totals[k])+'</b></div>').join("") + '</div>';
+  }
+  if (b.caps && typeof b.caps.xSpendUsedCents === "number" && b.caps.xSpendUsedCents > 0) {
+    html += '<p class="muted">إنفاق X: ' + cents(b.caps.xSpendUsedCents) + (b.caps.xSpendLimitCents != null ? ' من حد ' + cents(b.caps.xSpendLimitCents) : '') + '</p>';
+  }
+  html += '<p class="muted">المجاني شهريًا: حسابان، 10,000 رسالة في الصندوق، 2,000 تشغيل للرد التلقائي، 500 إعلان نشط.</p>';
+  box.innerHTML = html;
+}
+
+/* ---------- stats ---------- */
+const metricAr = { impressions:"مرات الظهور", reach:"الوصول", views:"المشاهدات", likes:"الإعجابات", comments:"التعليقات", shares:"المشاركات", clicks:"النقرات", saves:"الحفظ", engagementRate:"معدل التفاعل %", totalPosts:"المنشورات", publishedPosts:"المنشورات" };
+$("reloadStats").addEventListener("click", loadStats);
+function tiles(obj, keys){
+  const shown = keys.filter(k => typeof obj[k] === "number");
+  if (!shown.length) return "";
+  return '<div class="stats">' + shown.map(k => '<div class="stat"><b>'+(k === "engagementRate" ? obj[k].toFixed(1) : num(obj[k]))+'</b><span>'+metricAr[k]+'</span></div>').join("") + '</div>';
+}
+async function loadStats(){
+  $("overview").innerHTML = '<p class="muted">جارٍ التحميل...</p>'; $("statsList").innerHTML = "";
+  const from = new Date(Date.now() - 30*864e5).toISOString().slice(0,10);
+  try {
+    const d = await api("/v1/analytics", { query: { platform: PLATFORM || "all", fromDate: from, limit: 30 } });
+    const ov = d.overview || {};
+    $("overview").innerHTML = tiles(ov, ["totalPosts","publishedPosts","impressions","reach","likes","comments","shares","clicks","engagementRate"]) || '<p class="muted">لا توجد أرقام إجمالية بعد.</p>';
+    const posts = d.posts || d.data || [];
+    $("statsList").innerHTML = posts.length ? posts.map(p => {
+      const m = p.analytics || p.metrics || p;
+      return '<div class="item"><span class="muted">'+esc(fmtDate(p.publishedAt || p.scheduledFor))+'</span><p>'+esc((p.content||"").slice(0,140))+'</p>' +
+        tiles(m, ["impressions","reach","likes","comments","shares","clicks"]) + '</div>';
+    }).join("") : '<p class="muted">لا توجد منشورات في هذه الفترة.</p>';
+  } catch (e) { $("overview").innerHTML = '<div class="note err">'+esc(e.message)+'</div>'; }
+}
+
+/* ---------- start ---------- */
+if (store.get("zernio_vault")) { locked = true; show("lock"); }
+else show(KEY ? "post" : "settings");
+})();
+</script>
+</body>
+</html>
